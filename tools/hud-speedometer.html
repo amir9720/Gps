@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GPS HUD Speedometer Online - Digital Windshield Reflection Tool</title>
+  <meta name="description" content="Accurate online GPS speedometer with Head-Up Display (HUD) mirror mode for windshield reflection. Measures km/h, mph, max speed, and keeps screen awake.">
+  <meta name="robots" content="index, follow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/style_g83k2.css">
+  <style>
+    /* Tool-Specific Styles for HUD Speedometer */
+    .tool-header-area {
+      text-align: center;
+      margin: 30px 0 20px;
+    }
+    .tool-title {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+    .tool-lead {
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Interactive Tool Console Card */
+    .speedo-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-card);
+      margin-bottom: 30px;
+    }
+
+    /* The Dedicated Display Screen */
+    .hud-display-box {
+      background-color: #050b14;
+      border-radius: var(--radius-md);
+      padding: 36px 20px;
+      text-align: center;
+      position: relative;
+      transition: all 0.3s ease;
+      min-height: 280px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      border: 2px solid #1e293b;
+    }
+
+    .hud-display-box.mirror-active {
+      transform: scaleX(-1);
+    }
+
+    .speed-number {
+      font-family: 'Share Tech Mono', monospace, sans-serif;
+      font-size: 96px;
+      line-height: 1;
+      font-weight: 700;
+      color: #22c55e;
+      text-shadow: 0 0 25px rgba(34, 197, 94, 0.45);
+      margin-bottom: 6px;
+      letter-spacing: -2px;
+    }
+
+    .speed-unit {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      margin-top: 15px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: #1e293b;
+      color: #94a3b8;
+    }
+    .status-badge.live {
+      background: #064e3b;
+      color: #34d399;
+    }
+
+    /* Sub Stats (Max, Avg, Accuracy) */
+    .speed-stats-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .stat-mini-box {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      text-align: center;
+    }
+    .stat-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .stat-val {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-top: 2px;
+    }
+
+    /* Controls Bar */
+    .hud-controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .btn-tool {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-tool:hover {
+      background: #f1f5f9;
+      border-color: var(--border-hover);
+    }
+    .btn-tool.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+    .btn-start {
+      background: #16a34a;
+      color: #ffffff;
+      border-color: #16a34a;
+    }
+    .btn-start:hover {
+      background: #15803d;
+      color: #ffffff;
+    }
+    .btn-stop {
+      background: #dc2626;
+      color: #ffffff;
+      border-color: #dc2626;
+    }
+    .btn-stop:hover {
+      background: #b91c1c;
+      color: #ffffff;
+    }
+
+    @media (max-width: 600px) {
+      .speed-number {
+        font-size: 76px;
+      }
+      .speed-stats-bar {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Announcement Bar -->
+  <aside class="top-banner">
+    <div class="container banner-inner">
+      <span class="badge">100% Client-Side</span>
+      <span>Live satellite GPS tracking. Zero server logging. Your speed stays private.</span>
+    </div>
+  </aside>
+
+  <!-- Navigation Header -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="../index.html" class="brand-logo">
+        <div class="logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="logo-title">GeoTools<span class="highlight">Suite</span></span>
+          <span class="logo-sub">Online GPS Utilities</span>
+        </div>
+      </a>
+
+      <nav class="nav-links">
+        <a href="../index.html#travel-tools">Motion & Drive</a>
+        <a href="../index.html#city-tools">Urban & Social</a>
+        <a href="../index.html#science-tools">Sun & Science</a>
+        <a href="../about.html">About</a>
+      </nav>
+
+      <div class="header-action">
+        <a href="../index.html" class="btn-primary-sm">&larr; Back to Tools</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Tool Header Area -->
+    <div class="tool-header-area">
+      <span class="hero-chip">Driver & Travel Utility</span>
+      <h1 class="tool-title">GPS HUD Speedometer</h1>
+      <p class="tool-lead">Real-time satellite speed tracker with windshield reflection mode. Ideal for night driving, cycling, and train tracking.</p>
+    </div>
+
+    <!-- Interactive Speedometer Box -->
+    <div class="speedo-card">
+      <div id="hudBox" class="hud-display-box">
+        <div id="speedDisplay" class="speed-number">00</div>
+        <div id="unitDisplay" class="speed-unit">KM/H</div>
+        <div id="statusBadge" class="status-badge">GPS Standby (Tap Start)</div>
+      </div>
+
+      <!-- Stats Bar -->
+      <div class="speed-stats-bar">
+        <div class="stat-mini-box">
+          <div class="stat-label">Max Speed</div>
+          <div id="maxSpeedVal" class="stat-val">0.0</div>
+        </div>
+        <div class="stat-mini-box">
+          <div class="stat-label">Average Speed</div>
+          <div id="avgSpeedVal" class="stat-val">0.0</div>
+        </div>
+        <div class="stat-mini-box">
+          <div class="stat-label">GPS Precision</div>
+          <div id="accVal" class="stat-val">-- m</div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="hud-controls">
+        <button id="toggleTrackingBtn" class="btn-tool btn-start">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Start Speedometer
+        </button>
+
+        <button id="toggleUnitBtn" class="btn-tool">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          Unit: <span id="unitBtnText">KM/H</span>
+        </button>
+
+        <button id="toggleMirrorBtn" class="btn-tool">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>
+          HUD Mirror Mode
+        </button>
+
+        <button id="resetStatsBtn" class="btn-tool">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          Reset Stats
+        </button>
+      </div>
+    </div>
+
+    <!-- AdSense Placement (Safe Distance from Interactive Buttons) -->
+    <div class="ad-wrapper">
+      <div class="ad-slot-card">
+        <span class="ad-label">Advertisement</span>
+        <div class="ad-placeholder">
+          <span>Ad Space (In-Article Responsive Banner)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rich Educational & SEO Content (AdSense Thin-Content Safe) -->
+    <section class="seo-guide-section">
+      <div class="guide-box">
+        <h2 class="guide-heading">How GPS HUD Speedometer Works</h2>
+        <p class="guide-text">A Head-Up Display (HUD) projects visual metrics directly into your line of sight. By placing your smartphone on your vehicle dashboard facing upwards at night, this tool mirrors the speed readout horizontally. The reflection on your windshield glass appears right-side-up, allowing you to monitor driving velocity without shifting focus from the road.</p>
+
+        <div class="guide-grid">
+          <div class="guide-col">
+            <h3 class="guide-subhead">GPS Speed vs. Car Odometer</h3>
+            <p class="guide-text">Traditional vehicle odometers calculate speed based on wheel tire rotations, which can introduce a 3% to 7% variance caused by tire wear, rim size changes, or tire pressure. In contrast, GPS speed is computed by measuring Doppler frequency shifts and real-time positional coordinate intervals from satellites, offering true ground speed under clear sky conditions.</p>
+          </div>
+          <div class="guide-col">
+            <h3 class="guide-subhead">Optimizing HUD Reflection</h3>
+            <p class="guide-text">For the clearest windshield reflection without ghosting, set your phone screen brightness to 100%, activate HUD Mirror Mode, and place a dark anti-slip mat on your dashboard beneath the device. This minimizes secondary internal glass glare during nighttime journeys.</p>
+          </div>
+        </div>
+
+        <h3 class="guide-subhead" style="margin-top: 24px;">Frequently Asked Questions</h3>
+        <div class="faq-accordion">
+          <details class="faq-item">
+            <summary class="faq-question">Why does the speedometer show 0 or fluctuate when standing still?</summary>
+            <p class="faq-answer">Civilian satellite receivers experience slight atmospheric signal delays (GPS jitter) when stationary. This tool incorporates a dead-band filter that zeroes out movements under 1.5 km/h to prevent drifting while stopped at traffic lights.</p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-question">Does HUD mode require an internet connection while driving?</summary>
+            <p class="faq-answer">No. Once this webpage finishes loading in your mobile browser, all speed calculations and screen mirror rendering execute locally via the hardware GPS receiver chip without consuming continuous mobile data.</p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-question">Will the phone screen turn off automatically?</summary>
+            <p class="faq-answer">When tracking is active, this tool utilizes the modern Screen Wake Lock API to prevent your phone from entering sleep mode, keeping the HUD reflection visible throughout your trip.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Clean Footer -->
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <div class="footer-col">
+        <div class="brand-logo">
+          <div class="logo-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+          </div>
+          <span class="logo-title">GeoTools<span class="highlight">Suite</span></span>
+        </div>
+        <p class="footer-desc">A free, privacy-first collection of 12 client-side location and GPS web utilities designed for drivers, travelers, and nature enthusiasts.</p>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-title">Motion Tools</h4>
+        <ul class="footer-links">
+          <li><a href="hud-speedometer.html">GPS HUD Speedometer</a></li>
+          <li><a href="return-beacon.html">Car Return Beacon</a></li>
+          <li><a href="transit-alarm.html">Transit Wake-up Alarm</a></li>
+          <li><a href="gps-accuracy.html">GPS Sensor Benchmark</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-title">Legal & Trust</h4>
+        <ul class="footer-links">
+          <li><a href="../privacy.html">Privacy Policy</a></li>
+          <li><a href="../terms.html">Terms of Service</a></li>
+          <li><a href="../about.html">About Us</a></li>
+          <li><a href="../contact.html">Contact Support</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; 2026 GeoTools Suite. Zero tracking. Pure client-side calculations.</p>
+    </div>
+  </footer>
+
+  <!-- Complete Functional Client-Side JavaScript -->
+  <script>
+    let isTracking = false;
+    let watchId = null;
+    let currentUnit = 'kmh'; // 'kmh' or 'mph'
+    let isMirrored = false;
+    let wakeLock = null;
+
+    let maxSpeedKmh = 0;
+    let totalSpeedKmh = 0;
+    let speedSamplesCount = 0;
+
+    const hudBox = document.getElementById('hudBox');
+    const speedDisplay = document.getElementById('speedDisplay');
+    const unitDisplay = document.getElementById('unitDisplay');
+    const statusBadge = document.getElementById('statusBadge');
+    const maxSpeedVal = document.getElementById('maxSpeedVal');
+    const avgSpeedVal = document.getElementById('avgSpeedVal');
+    const accVal = document.getElementById('accVal');
+
+    const toggleTrackingBtn = document.getElementById('toggleTrackingBtn');
+    const toggleUnitBtn = document.getElementById('toggleUnitBtn');
+    const unitBtnText = document.getElementById('unitBtnText');
+    const toggleMirrorBtn = document.getElementById('toggleMirrorBtn');
+    const resetStatsBtn = document.getElementById('resetStatsBtn');
+
+    // Request Screen Wake Lock so display never sleeps while driving
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch (err) {
+        console.warn('Wake Lock not supported or rejected:', err);
+      }
+    }
+
+    function releaseWakeLock() {
+      if (wakeLock !== null) {
+        wakeLock.release();
+        wakeLock = null;
+      }
+    }
+
+    // Toggle Tracking
+    toggleTrackingBtn.addEventListener('click', () => {
+      if (!isTracking) {
+        startSpeedometer();
+      } else {
+        stopSpeedometer();
+      }
+    });
+
+    function startSpeedometer() {
+      if (!('geolocation' in navigator)) {
+        alert('Geolocation is not supported by your browser.');
+        return;
+      }
+
+      statusBadge.textContent = 'Acquiring Satellite Lock...';
+      statusBadge.classList.add('live');
+
+      watchId = navigator.geolocation.watchPosition(
+        handlePositionSuccess,
+        handlePositionError,
+        {
+          enableHighAccuracy: true,
+          maximumAge: 500,
+          timeout: 10000
+        }
+      );
+
+      isTracking = true;
+      toggleTrackingBtn.textContent = 'Stop Speedometer';
+      toggleTrackingBtn.className = 'btn-tool btn-stop';
+      requestWakeLock();
+    }
+
+    function stopSpeedometer() {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+      }
+      isTracking = false;
+      toggleTrackingBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Start Speedometer';
+      toggleTrackingBtn.className = 'btn-tool btn-start';
+      statusBadge.textContent = 'Speedometer Paused';
+      statusBadge.classList.remove('live');
+      releaseWakeLock();
+    }
+
+    function handlePositionSuccess(position) {
+      statusBadge.textContent = 'Live Satellite Tracking';
+      const coords = position.coords;
+
+      // coords.speed is in meters/sec. If stationary or null, default to 0
+      let rawSpeedMps = coords.speed !== null && !isNaN(coords.speed) ? Math.max(0, coords.speed) : 0;
+      
+      // Filter slight stationary drift (jitter below 0.4 m/s is considered 0)
+      if (rawSpeedMps < 0.4) {
+        rawSpeedMps = 0;
+      }
+
+      const speedInKmh = rawSpeedMps * 3.6;
+
+      // Update Max Speed
+      if (speedInKmh > maxSpeedKmh) {
+        maxSpeedKmh = speedInKmh;
+      }
+
+      // Update Average Speed (when vehicle is in motion)
+      if (speedInKmh > 1) {
+        totalSpeedKmh += speedInKmh;
+        speedSamplesCount++;
+      }
+
+      // Accuracy
+      if (coords.accuracy !== null) {
+        accVal.textContent = Math.round(coords.accuracy) + ' m';
+      }
+
+      updateDisplays(speedInKmh);
+    }
+
+    function handlePositionError(err) {
+      statusBadge.textContent = 'GPS Error: ' + (err.message || 'Permission Denied');
+      statusBadge.classList.remove('live');
+    }
+
+    function updateDisplays(currentKmh) {
+      let displaySpeed = 0;
+      let displayMax = 0;
+      let displayAvg = 0;
+
+      const avgKmh = speedSamplesCount > 0 ? (totalSpeedKmh / speedSamplesCount) : 0;
+
+      if (currentUnit === 'kmh') {
+        displaySpeed = Math.round(currentKmh);
+        displayMax = maxSpeedKmh.toFixed(1);
+        displayAvg = avgKmh.toFixed(1);
+      } else {
+        // mph conversion: kmh * 0.621371
+        displaySpeed = Math.round(currentKmh * 0.621371);
+        displayMax = (maxSpeedKmh * 0.621371).toFixed(1);
+        displayAvg = (avgKmh * 0.621371).toFixed(1);
+      }
+
+      speedDisplay.textContent = displaySpeed < 10 ? '0' + displaySpeed : displaySpeed;
+      maxSpeedVal.textContent = displayMax;
+      avgSpeedVal.textContent = displayAvg;
+    }
+
+    // Toggle KM/H vs MPH
+    toggleUnitBtn.addEventListener('click', () => {
+      currentUnit = currentUnit === 'kmh' ? 'mph' : 'kmh';
+      const label = currentUnit.toUpperCase();
+      unitDisplay.textContent = label;
+      unitBtnText.textContent = label;
+      
+      const currentDisplayed = parseFloat(speedDisplay.textContent) || 0;
+      // Re-render stats immediately
+      updateDisplays(currentUnit === 'kmh' ? currentDisplayed / 0.621371 : currentDisplayed * 0.621371);
+    });
+
+    // Toggle HUD Windshield Reflection (Mirror Mode)
+    toggleMirrorBtn.addEventListener('click', () => {
+      isMirrored = !isMirrored;
+      if (isMirrored) {
+        hudBox.classList.add('mirror-active');
+        toggleMirrorBtn.classList.add('active');
+      } else {
+        hudBox.classList.remove('mirror-active');
+        toggleMirrorBtn.classList.remove('active');
+      }
+    });
+
+    // Reset Stats
+    resetStatsBtn.addEventListener('click', () => {
+      maxSpeedKmh = 0;
+      totalSpeedKmh = 0;
+      speedSamplesCount = 0;
+      maxSpeedVal.textContent = '0.0';
+      avgSpeedVal.textContent = '0.0';
+    });
+  </script>
+</body>
+</html>
