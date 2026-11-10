@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Online Qibla Compass & Direction Finder - 100% Private</title>
+  <meta name="description" content="Find the exact Qibla direction for prayer (Salah) directly from your browser. Free online compass combining GPS and device orientation. No app needed.">
+  <meta name="robots" content="index, follow">
+  
+  <!-- Google Analytics Tag -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTZ0GYNKVJ"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-PTZ0GYNKVJ');
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  
+  <!-- Path to main CSS from inside the tool folder -->
+  <link rel="stylesheet" href="../assets/style_g83k2.css">
+  
+  <style>
+    .tool-header-area { text-align: center; margin: 30px 0 20px; }
+    .tool-title { font-size: 30px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; }
+    .tool-lead { font-size: 15px; color: var(--text-muted); max-width: 620px; margin: 0 auto; }
+    
+    .compass-card { background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-card); margin-bottom: 30px; text-align: center; }
+    
+    .compass-container { position: relative; width: 280px; height: 280px; margin: 20px auto; border-radius: 50%; background: #0b1329; border: 4px solid #1e293b; box-shadow: inset 0 0 40px rgba(0,0,0,0.5), 0 10px 30px rgba(15,23,42,0.1); display: flex; align-items: center; justify-content: center; }
+    
+    /* The rotating compass dial */
+    .compass-dial { position: absolute; width: 100%; height: 100%; border-radius: 50%; transition: transform 0.1s cubic-bezier(0.1, 0.9, 0.2, 1); }
+    
+    /* North Marker */
+    .marker-north { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); color: #ef4444; font-weight: 800; font-size: 18px; text-shadow: 0 0 10px rgba(239,68,68,0.5); }
+    .marker-south { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); color: #94a3b8; font-weight: 700; font-size: 14px; }
+    .marker-east { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-weight: 700; font-size: 14px; }
+    .marker-west { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-weight: 700; font-size: 14px; }
+    
+    /* The Qibla Pointer */
+    .qibla-pointer-container { position: absolute; width: 100%; height: 100%; border-radius: 50%; transition: transform 0.5s cubic-bezier(0.1, 0.9, 0.2, 1); pointer-events: none; }
+    .qibla-icon { position: absolute; top: 25px; left: 50%; transform: translateX(-50%); width: 24px; height: 24px; background: #22c55e; border-radius: 4px; box-shadow: 0 0 15px rgba(34,197,94,0.6); display: flex; align-items: center; justify-content: center; }
+    .qibla-icon::after { content: ''; width: 12px; height: 12px; background: #000; border-radius: 2px; }
+    .qibla-line { position: absolute; top: 49px; left: 50%; transform: translateX(-50%); width: 2px; height: 90px; background: linear-gradient(to bottom, #22c55e, transparent); }
+    
+    /* Center Fix Marker (Device Orientation) */
+    .center-crosshair { position: absolute; width: 20px; height: 20px; background: #ffffff; border-radius: 50%; z-index: 10; box-shadow: 0 0 10px rgba(255,255,255,0.5); }
+    .center-arrow-up { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 20px solid #facc15; z-index: 11; filter: drop-shadow(0 0 5px rgba(250,204,21,0.5)); }
+    
+    .status-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+    .status-box { background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px; }
+    .status-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+    .status-val { font-family: 'Share Tech Mono', monospace; font-size: 18px; font-weight: 700; color: var(--text-main); }
+    
+    .calibration-warning { display: none; background: #fffbeb; border: 1px solid #fde68a; color: #b45309; padding: 12px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; margin-bottom: 20px; }
+    
+    .tool-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+    .btn-tool { background: #ffffff; border: 1px solid var(--border-color); color: var(--text-main); font-family: inherit; font-size: 14px; font-weight: 600; padding: 12px 20px; border-radius: var(--radius-sm); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s ease; }
+    .btn-tool:hover { background: #f1f5f9; border-color: var(--border-hover); }
+    .btn-primary { background: #10b981; color: #ffffff; border-color: #10b981; }
+    .btn-primary:hover { background: #059669; color: #ffffff; }
+
+    @media (max-width: 600px) { .status-panel { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+  <aside class="top-banner">
+    <div class="container banner-inner">
+      <span class="badge">100% Client-Side</span>
+      <span>Calculates angles locally on your device. Zero server interaction.</span>
+    </div>
+  </aside>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="../index.html" class="brand-logo">
+        <div class="logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="logo-title">GeoTools<span class="highlight">Suite</span></span>
+          <span class="logo-sub">Online GPS Utilities</span>
+        </div>
+      </a>
+      <nav class="nav-links">
+        <a href="../index.html#travel-tools">Motion & Drive</a>
+        <a href="../index.html#city-tools">Urban & Social</a>
+        <a href="../index.html#science-tools">Sun & Science</a>
+      </nav>
+      <div class="header-action">
+        <a href="../index.html" class="btn-primary-sm">&larr; Back to Tools</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="tool-header-area">
+      <span class="hero-chip">Social & Neighborhood Tool</span>
+      <h1 class="tool-title">Web Qibla & Direction Compass</h1>
+      <p class="tool-lead">Find your precise heading or the exact direction of Mecca (Qibla) from your current location using your device's internal magnetometer.</p>
+    </div>
+
+    <div class="compass-card">
+      <div id="calibrationWarning" class="calibration-warning">
+        ⚠️ Please calibrate your compass by moving your phone in a "Figure 8" motion. Make sure you are away from strong magnets or metal objects.
+      </div>
+
+      <div class="compass-container">
+        <!-- The Dial that rotates based on magnetic north -->
+        <div id="compassDial" class="compass-dial">
+          <div class="marker-north">N</div>
+          <div class="marker-east">E</div>
+          <div class="marker-south">S</div>
+          <div class="marker-west">W</div>
+          
+          <!-- The Qibla indicator sitting on the dial -->
+          <div id="qiblaPointer" class="qibla-pointer-container" style="display: none;">
+            <div class="qibla-icon"></div>
+            <div class="qibla-line"></div>
+          </div>
+        </div>
+
+        <!-- The fixed reference point for the phone -->
+        <div class="center-arrow-up"></div>
+        <div class="center-crosshair"></div>
+      </div>
+
+      <div class="status-panel">
+        <div class="status-box">
+          <div class="status-label">Device Heading</div>
+          <div id="headingVal" class="status-val">---°</div>
+        </div>
+        <div class="status-box">
+          <div class="status-label">Qibla Angle (from True North)</div>
+          <div id="qiblaAngleVal" class="status-val">---°</div>
+        </div>
+      </div>
+
+      <div class="tool-controls">
+        <button id="startCompassBtn" class="btn-tool btn-primary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+          <span id="btnText">Enable Compass & GPS</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="ad-wrapper">
+      <div class="ad-slot-card">
+        <span class="ad-label">Advertisement</span>
+        <div class="ad-placeholder">
+          <span>Ad Space (In-Article Responsive Banner)</span>
+        </div>
+      </div>
+    </div>
+
+    <section class="seo-guide-section">
+      <div class="guide-box">
+        <h2 class="guide-heading">How Digital Web Compasses Work</h2>
+        <p class="guide-text">Modern smartphones are equipped with a magnetometer—a tiny micro-electromechanical sensor (MEMS) that detects the Earth's magnetic field. This tool accesses that sensor via the HTML5 DeviceOrientation API to rotate the compass dial, keeping "North" correctly aligned no matter how you turn your phone.</p>
+
+        <div class="guide-grid">
+          <div class="guide-col">
+            <h3 class="guide-subhead">Calculating the Qibla Direction</h3>
+            <p class="guide-text">The Qibla is the fixed direction towards the Kaaba in the Grand Mosque in Mecca, Saudi Arabia (Latitude: 21.4225, Longitude: 39.8262). Once you grant GPS permission, this tool calculates the shortest path (the great-circle track) from your exact coordinates to Mecca using spherical trigonometry, and places a green marker precisely on the compass dial.</p>
+          </div>
+          <div class="guide-col">
+            <h3 class="guide-subhead">Handling Magnetic Interference</h3>
+            <p class="guide-text">Electronic appliances, steel girders in modern buildings, and magnetic phone cases can severely distort magnetometer readings. For the most accurate bearing, use this tool outdoors or near a window, away from computers and heavy machinery.</p>
+          </div>
+        </div>
+
+        <h3 class="guide-subhead" style="margin-top: 24px;">Frequently Asked Questions</h3>
+        <div class="faq-accordion">
+          <details class="faq-item">
+            <summary class="faq-question">Why does the web browser ask for motion and orientation permissions on iOS?</summary>
+            <p class="faq-answer">Apple (iOS 13 and later) requires explicit user interaction to read gyroscope and magnetometer data to protect your privacy. Clicking the "Enable Compass" button securely requests this access directly inside Safari without downloading an app.</p>
+          </details>
+          <details class="faq-item">
+            <summary class="faq-question">Does this tool use True North or Magnetic North?</summary>
+            <p class="faq-answer">The tool attempts to use True North by factoring in the magnetic declination if the hardware and operating system provide it (such as `webkitCompassHeading` on iOS). On standard Android devices, it defaults to magnetic north, which is usually accurate enough for everyday use.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <div class="footer-col">
+        <div class="brand-logo">
+          <div class="logo-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+          </div>
+          <span class="logo-title">GeoTools<span class="highlight">Suite</span></span>
+        </div>
+        <p class="footer-desc">A free, privacy-first collection of 12 client-side location and GPS web utilities designed for drivers, travelers, and nature enthusiasts.</p>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-title">Urban Tools</h4>
+        <ul class="footer-links">
+          <li><a href="../halfway/">Fair Halfway Point</a></li>
+          <li><a href="../walking-radius/">15-Min Walk Radius</a></li>
+          <li><a href="../qibla-finder/">Qibla & Compass</a></li>
+          <li><a href="../eco-dashboard/">Environment Dashboard</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-title">Legal & Trust</h4>
+        <ul class="footer-links">
+          <li><a href="../privacy.html">Privacy Policy</a></li>
+          <li><a href="../terms.html">Terms of Service</a></li>
+          <li><a href="../about.html">About Us</a></li>
+          <li><a href="mailto:sobl5910@gmail.com">Contact Support</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; 2026 GeoTools Suite. Zero tracking. Pure client-side calculations.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Mecca Coordinates
+    const MECCA_LAT = 21.422487;
+    const MECCA_LNG = 39.826206;
+
+    let isCompassActive = false;
+    let deviceHeading = 0;
+    let qiblaBearing = null;
+    let hasWarnedCalibration = false;
+
+    const compassDial = document.getElementById('compassDial');
+    const qiblaPointer = document.getElementById('qiblaPointer');
+    const headingVal = document.getElementById('headingVal');
+    const qiblaAngleVal = document.getElementById('qiblaAngleVal');
+    const calibrationWarning = document.getElementById('calibrationWarning');
+    const startBtn = document.getElementById('startCompassBtn');
+    const btnText = document.getElementById('btnText');
+
+    startBtn.addEventListener('click', () => {
+      if (isCompassActive) return;
+      initCompass();
+    });
+
+    async function initCompass() {
+      // 1. Request iOS 13+ DeviceOrientation permission if necessary
+      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        try {
+          const permissionState = await DeviceOrientationEvent.requestPermission();
+          if (permissionState === 'granted') {
+            setupSensors();
+          } else {
+            alert('Compass access denied. Please allow motion sensors in your settings.');
+            return;
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      } else {
+        // Non-iOS or older devices
+        setupSensors();
+      }
+
+      // 2. Request GPS to calculate Qibla
+      if ('geolocation' in navigator) {
+        btnText.textContent = 'Acquiring GPS...';
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            calculateQibla(pos.coords.latitude, pos.coords.longitude);
+            isCompassActive = true;
+            startBtn.style.display = 'none';
+          },
+          err => {
+            alert("Could not get location to calculate Qibla: " + err.message);
+            isCompassActive = true;
+            startBtn.style.display = 'none';
+          }
+        );
+      } else {
+        isCompassActive = true;
+        startBtn.style.display = 'none';
+      }
+    }
+
+    function setupSensors() {
+      window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+      window.addEventListener('deviceorientation', handleOrientation, true);
+    }
+
+    function handleOrientation(e) {
+      if (!isCompassActive) return;
+
+      let heading = null;
+      // iOS webkitCompassHeading gives degrees from True North
+      if (e.webkitCompassHeading != null) {
+        heading = e.webkitCompassHeading;
+      } 
+      // Android absolute alpha
+      else if (e.absolute === true && e.alpha !== null) {
+        heading = 360 - e.alpha;
+      } 
+      // Standard fallback
+      else if (e.alpha !== null) {
+        heading = 360 - e.alpha;
+      }
+
+      if (heading !== null) {
+        deviceHeading = heading;
+        // Rotate the dial exactly opposite to the heading to keep North pointing Up
+        compassDial.style.transform = `rotate(${-deviceHeading}deg)`;
+        headingVal.textContent = Math.round(deviceHeading) + '°';
+
+        // Calibration warning logic (if accuracy property exists)
+        if (e.webkitCompassAccuracy) {
+          if (e.webkitCompassAccuracy > 15 && !hasWarnedCalibration) {
+            calibrationWarning.style.display = 'block';
+            hasWarnedCalibration = true;
+          } else if (e.webkitCompassAccuracy <= 15 && hasWarnedCalibration) {
+            calibrationWarning.style.display = 'none';
+          }
+        }
+      }
+    }
+
+    function calculateQibla(lat, lng) {
+      // Calculate bearing from user location to Mecca
+      const toRad = Math.PI / 180;
+      const lat1 = lat * toRad;
+      const lat2 = MECCA_LAT * toRad;
+      const dLon = (MECCA_LNG - lng) * toRad;
+
+      const y = Math.sin(dLon) * Math.cos(lat2);
+      const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+      
+      let bearing = Math.atan2(y, x) * 180 / Math.PI;
+      bearing = (bearing + 360) % 360;
+
+      qiblaBearing = bearing;
+      qiblaAngleVal.textContent = Math.round(qiblaBearing) + '°';
+      
+      // Position the Qibla pointer on the dial
+      qiblaPointer.style.display = 'block';
+      qiblaPointer.style.transform = `rotate(${qiblaBearing}deg)`;
+    }
+  </script>
+</body>
+</html>
