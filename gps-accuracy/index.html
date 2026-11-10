@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GPS Accuracy Test & Sensor Benchmark Online</title>
+  <meta name="description" content="Free online tool to test your mobile GPS accuracy, check satellite signal strength, and benchmark location sensor health in real-time.">
+  <meta name="robots" content="index, follow">
+  
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTZ0GYNKVJ"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-PTZ0GYNKVJ');
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  
+  <!-- Path to main CSS from inside the tool folder -->
+  <link rel="stylesheet" href="../assets/style_g83k2.css">
+  
+  <style>
+    .tool-header-area { text-align: center; margin: 30px 0 20px; }
+    .tool-title { font-size: 30px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; }
+    .tool-lead { font-size: 15px; color: var(--text-muted); max-width: 620px; margin: 0 auto; }
+    
+    .benchmark-card { background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-card); margin-bottom: 30px; }
+    
+    .accuracy-display-box { background-color: #0b1329; border-radius: var(--radius-md); padding: 36px 20px; text-align: center; border: 2px solid #1e293b; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; }
+    
+    .accuracy-val { font-family: 'Share Tech Mono', monospace, sans-serif; font-size: 72px; font-weight: 700; color: #38bdf8; text-shadow: 0 0 20px rgba(56, 189, 248, 0.4); line-height: 1; margin-bottom: 6px; transition: color 0.3s ease; }
+    .accuracy-val.excellent { color: #22c55e; text-shadow: 0 0 20px rgba(34, 197, 94, 0.4); }
+    .accuracy-val.good { color: #facc15; text-shadow: 0 0 20px rgba(250, 204, 21, 0.4); }
+    .accuracy-val.poor { color: #ef4444; text-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+    
+    .accuracy-label { font-size: 13px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; }
+    
+    .health-badge { display: inline-block; margin-top: 16px; font-size: 13px; font-weight: 700; padding: 6px 16px; border-radius: 20px; background: #1e293b; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; }
+    .health-badge.excellent { background: #064e3b; color: #34d399; }
+    .health-badge.good { background: #713f12; color: #fde047; }
+    .health-badge.poor { background: #7f1d1d; color: #fca5a5; }
+    
+    .raw-data-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 24px; }
+    .data-item { background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: center; }
+    .data-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+    .data-val { font-family: 'Share Tech Mono', monospace; font-size: 16px; font-weight: 700; color: var(--text-main); }
+    
+    .tool-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+    .btn-tool { background: #ffffff; border: 1px solid var(--border-color); color: var(--text-main); font-family: inherit; font-size: 14px; font-weight: 600; padding: 10px 18px; border-radius: var(--radius-sm); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s ease; }
+    .btn-tool:hover { background: #f1f5f9; border-color: var(--border-hover); }
+    .btn-start { background: #2563eb; color: #ffffff; border-color: #2563eb; }
+    .btn-start:hover { background: #1d4ed8; color: #ffffff; }
+    .btn-stop { background: #dc2626; color: #ffffff; border-color: #dc2626; }
+    .btn-stop:hover { background: #b91c1c; color: #ffffff; }
+    
+    @media (max-width: 600px) { .raw-data-grid { grid-template-columns: 1fr; } .accuracy-val { font-size: 56px; } }
+  </style>
+</head>
+<body>
+
+  <aside class="top-banner">
+    <div class="container banner-inner">
+      <span class="badge">100% Client-Side</span>
+      <span>Hardware metrics are read locally from your device. Nothing is logged externally.</span>
+    </div>
+  </aside>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="../index.html" class="brand-logo">
+        <div class="logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="logo-title">GeoTools<span class="highlight">Suite</span></span>
+          <span class="logo-sub">Online GPS Utilities</span>
+        </div>
+      </a>
+
+      <nav class="nav-links">
+        <a href="../index.html#travel-tools">Motion & Drive</a>
+        <a href="../index.html#city-tools">Urban & Social</a>
+        <a href="../index.html#science-tools">Sun & Science</a>
+      </nav>
+
+      <div class="header-action">
+        <a href="../index.html" class="btn-primary-sm">&larr; Back to Tools</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="tool-header-area">
+      <span class="hero-chip">Hardware Diagnostic Tool</span>
+      <h1 class="tool-title">GPS Accuracy & Sensor Benchmark</h1>
+      <p class="tool-lead">Test your smartphone's location sensor health, verify satellite signal precision in meters, and view raw geodata without installing third-party diagnostic apps.</p>
+    </div>
+
+    <div class="benchmark-card">
+      <div class="accuracy-display-box">
+        <div id="accuracyDisplay" class="accuracy-val">--</div>
+        <div class="accuracy-label">METERS OF ERROR MARGIN (LOWER IS BETTER)</div>
+        <div id="healthBadge" class="health-badge">Standby</div>
+      </div>
+
+      <div class="raw-data-grid">
+        <div class="data-item">
+          <div class="data-label">Latitude</div>
+          <div id="latDisplay" class="data-val">--</div>
+        </div>
+        <div class="data-item">
+          <div class="data-label">Longitude</div>
+          <div id="lngDisplay" class="data-val">--</div>
+        </div>
+        <div class="data-item">
+          <div class="data-label">Altitude (Elevation)</div>
+          <div id="altDisplay" class="data-val">--</div>
+        </div>
+        <div class="data-item">
+          <div class="data-label">Heading / Direction</div>
+          <div id="headingDisplay" class="data-val">--</div>
+        </div>
+      </div>
+
+      <div class="tool-controls">
+        <button id="toggleTestBtn" class="btn-tool btn-start">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span id="btnText">Start Sensor Test</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="ad-wrapper">
+      <div class="ad-slot-card">
+        <span class="ad-label">Advertisement</span>
+        <div class="ad-placeholder">
+          <span>Ad Space (In-Article Responsive Banner)</span>
+        </div>
+      </div>
+    </div>
+
+    <section class="seo-guide-section">
+      <div class="guide-box">
+        <h2 class="guide-heading">Understanding Your GPS Sensor Health</h2>
+        <p class="guide-text">Your smartphone relies on an internal A-GPS (Assisted GPS) chip that communicates with orbital satellites (like GPS, GLONASS, or Galileo) alongside cellular tower triangulation. The "Error Margin" displayed above indicates the radius of uncertainty around your reported location.</p>
+
+        <div class="guide-grid">
+          <div class="guide-col">
+            <h3 class="guide-subhead">Accuracy Benchmark Tiers</h3>
+            <ul style="font-size:14px; color:var(--text-muted); padding-left:20px; line-height:1.6;">
+              <li><strong style="color:var(--text-main);">Excellent (0-5 meters):</strong> Optimal satellite lock. Usually achieved outdoors under a clear sky.</li>
+              <li><strong style="color:var(--text-main);">Good (6-15 meters):</strong> Average urban performance. Slight interference from trees or low buildings.</li>
+              <li><strong style="color:var(--text-main);">Poor (15+ meters):</strong> Weak signal. Common indoors, in basements, or dense urban canyons with tall skyscrapers.</li>
+            </ul>
+          </div>
+          <div class="guide-col">
+            <h3 class="guide-subhead">How to Calibrate Your Sensor</h3>
+            <p class="guide-text">If your accuracy remains "Poor" even when standing outdoors, your device's internal compass and GPS cache might be out of sync. To fix this, open your maps application and move your phone in a "Figure 8" motion several times. This resets the magnetometer and forces a fresh satellite handshake.</p>
+          </div>
+        </div>
+
+        <h3 class="guide-subhead" style="margin-top: 24px;">Frequently Asked Questions</h3>
+        <div class="faq-accordion">
+          <details class="faq-item">
+            <summary class="faq-question">Why is my altitude reading blank or inaccurate?</summary>
+            <p class="faq-answer">Altitude (elevation above sea level) requires a 3D satellite lock connecting to at least four distinct satellites. Some older smartphones or budget devices do not pass altitude data to the browser, resulting in a blank reading. Even when available, consumer GPS altitude is typically less accurate than horizontal latitude/longitude.</p>
+          </details>
+          <details class="faq-item">
+            <summary class="faq-question">Can Wi-Fi improve my GPS accuracy?</summary>
+            <p class="faq-answer">Yes. Modern devices use Wi-Fi Positioning Systems (WPS) alongside traditional GPS. By keeping your Wi-Fi turned on (even if you are not connected to a network), your phone scans nearby routers to instantly pinpoint your location indoors where satellite signals fail to penetrate.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <div class="footer-col">
+        <div class="brand-logo">
+          <div class="logo-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+          </div>
+          <span class="logo-title">GeoTools<span class="highlight">Suite</span></span>
+        </div>
+        <p class="footer-desc">A free, privacy-first collection of 12 client-side location and GPS web utilities designed for drivers, travelers, and nature enthusiasts.</p>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-title">Motion Tools</h4>
+        <ul class="footer-links">
+          <li><a href="../hud-speedometer/">GPS HUD Speedometer</a></li>
+          <li><a href="../return-beacon/">Car Return Beacon</a></li>
+          <li><a href="../transit-alarm/">Transit Wake-up Alarm</a></li>
+          <li><a href="../gps-accuracy/">GPS Sensor Benchmark</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-title">Legal & Trust</h4>
+        <ul class="footer-links">
+          <li><a href="../privacy.html">Privacy Policy</a></li>
+          <li><a href="../terms.html">Terms of Service</a></li>
+          <li><a href="../about.html">About Us</a></li>
+          <li><a href="mailto:sobl5910@gmail.com">Contact Support</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; 2026 GeoTools Suite. Zero tracking. Pure client-side calculations.</p>
+    </div>
+  </footer>
+
+  <script>
+    let isTesting = false;
+    let watchId = null;
+
+    const accuracyDisplay = document.getElementById('accuracyDisplay');
+    const healthBadge = document.getElementById('healthBadge');
+    
+    const latDisplay = document.getElementById('latDisplay');
+    const lngDisplay = document.getElementById('lngDisplay');
+    const altDisplay = document.getElementById('altDisplay');
+    const headingDisplay = document.getElementById('headingDisplay');
+
+    const toggleTestBtn = document.getElementById('toggleTestBtn');
+    const btnText = document.getElementById('btnText');
+
+    toggleTestBtn.addEventListener('click', () => {
+      if (!isTesting) {
+        startBenchmark();
+      } else {
+        stopBenchmark();
+      }
+    });
+
+    function startBenchmark() {
+      if (!('geolocation' in navigator)) {
+        alert('Geolocation is not supported by your browser.');
+        return;
+      }
+
+      isTesting = true;
+      toggleTestBtn.className = 'btn-tool btn-stop';
+      btnText.textContent = 'Stop Diagnostic';
+      healthBadge.textContent = 'Scanning Satellites...';
+      healthBadge.className = 'health-badge';
+
+      watchId = navigator.geolocation.watchPosition(
+        updateDiagnostics,
+        handleError,
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+      );
+    }
+
+    function stopBenchmark() {
+      isTesting = false;
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+      }
+      toggleTestBtn.className = 'btn-tool btn-start';
+      btnText.textContent = 'Start Sensor Test';
+      healthBadge.textContent = 'Test Paused';
+      healthBadge.className = 'health-badge';
+    }
+
+    function updateDiagnostics(position) {
+      const coords = position.coords;
+      
+      // Update Accuracy
+      const acc = coords.accuracy;
+      accuracyDisplay.textContent = acc ? acc.toFixed(1) : '--';
+      
+      accuracyDisplay.className = 'accuracy-val';
+      healthBadge.className = 'health-badge';
+
+      if (acc <= 5) {
+        accuracyDisplay.classList.add('excellent');
+        healthBadge.classList.add('excellent');
+        healthBadge.textContent = 'Excellent Signal';
+      } else if (acc > 5 && acc <= 15) {
+        accuracyDisplay.classList.add('good');
+        healthBadge.classList.add('good');
+        healthBadge.textContent = 'Good Signal';
+      } else {
+        accuracyDisplay.classList.add('poor');
+        healthBadge.classList.add('poor');
+        healthBadge.textContent = 'Poor Signal';
+      }
+
+      // Update Raw Data
+      latDisplay.textContent = coords.latitude ? coords.latitude.toFixed(6) + '°' : '--';
+      lngDisplay.textContent = coords.longitude ? coords.longitude.toFixed(6) + '°' : '--';
+      
+      altDisplay.textContent = coords.altitude ? coords.altitude.toFixed(1) + ' m' : 'Not Available';
+      
+      if (coords.heading !== null && !isNaN(coords.heading)) {
+        headingDisplay.textContent = coords.heading.toFixed(1) + '°';
+      } else {
+        headingDisplay.textContent = 'Not Moving';
+      }
+    }
+
+    function handleError(err) {
+      healthBadge.textContent = 'Error: ' + err.message;
+      healthBadge.className = 'health-badge poor';
+      accuracyDisplay.textContent = '--';
+      accuracyDisplay.className = 'accuracy-val';
+    }
+  </script>
+</body>
+</html>
