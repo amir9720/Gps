@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>15-Minute Walk Radius Map - Walkability Calculator Online</title>
+  <meta name="description" content="Calculate your 15-minute walkable neighborhood zone. Drop a pin on the map to see how far you can walk in 5, 10, or 20 minutes using our free radius tool.">
+  <meta name="robots" content="index, follow">
+  
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTZ0GYNKVJ"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-PTZ0GYNKVJ');
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../assets/style_g83k2.css">
+  
+  <!-- Leaflet Map CSS/JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    .tool-header-area { text-align: center; margin: 30px 0 20px; }
+    .tool-title { font-size: 30px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; }
+    .tool-lead { font-size: 15px; color: var(--text-muted); max-width: 620px; margin: 0 auto; }
+    
+    .radius-card { background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-card); margin-bottom: 30px; }
+    
+    #radiusMap { width: 100%; height: 450px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 24px; z-index: 1; }
+    
+    .controls-panel { background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 16px; }
+    
+    .control-group { display: flex; flex-direction: column; gap: 6px; }
+    .control-label { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .radius-select { width: 100%; padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-family: inherit; font-size: 15px; font-weight: 600; color: var(--text-main); background: #ffffff; outline: none; cursor: pointer; transition: border-color 0.2s; }
+    .radius-select:focus { border-color: var(--primary); }
+    
+    .tool-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+    .btn-tool { background: #ffffff; border: 1px solid var(--border-color); color: var(--text-main); font-family: inherit; font-size: 14px; font-weight: 600; padding: 10px 18px; border-radius: var(--radius-sm); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s ease; }
+    .btn-tool:hover { background: #f1f5f9; border-color: var(--border-hover); }
+    
+    .btn-primary { background: #16a34a; color: #ffffff; border-color: #16a34a; }
+    .btn-primary:hover { background: #15803d; color: #ffffff; }
+    .btn-secondary { background: #2563eb; color: #ffffff; border-color: #2563eb; }
+    .btn-secondary:hover { background: #1d4ed8; color: #ffffff; }
+    
+    @media (max-width: 600px) { #radiusMap { height: 350px; } }
+  </style>
+</head>
+<body>
+
+  <aside class="top-banner">
+    <div class="container banner-inner">
+      <span class="badge">100% Client-Side</span>
+      <span>Calculations happen instantly on your device. Your location is strictly private.</span>
+    </div>
+  </aside>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="../index.html" class="brand-logo">
+        <div class="logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="logo-title">GeoTools<span class="highlight">Suite</span></span>
+          <span class="logo-sub">Online GPS Utilities</span>
+        </div>
+      </a>
+      <nav class="nav-links">
+        <a href="../index.html#travel-tools">Motion & Drive</a>
+        <a href="../index.html#city-tools">Urban & Social</a>
+        <a href="../index.html#science-tools">Sun & Science</a>
+      </nav>
+      <div class="header-action">
+        <a href="../index.html" class="btn-primary-sm">&larr; Back to Tools</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="tool-header-area">
+      <span class="hero-chip">Neighborhood & Real Estate Tool</span>
+      <h1 class="tool-title">15-Minute Walk Radius Map</h1>
+      <p class="tool-lead">Discover what is truly within walking distance. Enter your location to draw a precise walkability circle around your home, office, or hotel.</p>
+    </div>
+
+    <div class="radius-card">
+      <div id="radiusMap"></div>
+
+      <div class="controls-panel">
+        <div class="control-group">
+          <label class="control-label">Select Walking Time & Distance</label>
+          <select id="distanceSelect" class="radius-select">
+            <option value="400">5-Minute Walk (approx. 400 meters)</option>
+            <option value="800" selected>10-Minute Walk (approx. 800 meters)</option>
+            <option value="1200">15-Minute Walk (approx. 1.2 km)</option>
+            <option value="2400">30-Minute Walk (approx. 2.4 km)</option>
+            <option value="5000">1-Hour Walk (approx. 5 km)</option>
+          </select>
+        </div>
+        
+        <div class="tool-controls">
+          <button id="gpsBtn" class="btn-tool btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+            Use My Current GPS Location
+          </button>
+          <button id="clearBtn" class="btn-tool">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Clear Map
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="ad-wrapper">
+      <div class="ad-slot-card">
+        <span class="ad-label">Advertisement</span>
+        <div class="ad-placeholder">
+          <span>Ad Space (In-Article Responsive Banner)</span>
+        </div>
+      </div>
+    </div>
+
+    <section class="seo-guide-section">
+      <div class="guide-box">
+        <h2 class="guide-heading">The "15-Minute City" Concept Explained</h2>
+        <p class="guide-text">The 15-minute city is an urban planning concept proposing that most daily necessities and services—such as work, shopping, education, healthcare, and leisure—should be easily reachable by a 15-minute walk or bike ride from any point in the city. This tool helps you visualize exactly what falls within that boundary from your doorstep.</p>
+
+        <div class="guide-grid">
+          <div class="guide-col">
+            <h3 class="guide-subhead">Average Walking Speeds</h3>
+            <p class="guide-text">The radius calculations in this tool are based on the globally accepted average human walking speed of roughly 3 miles per hour (4.8 km/h or 80 meters per minute). A 15-minute walk therefore correlates to a straight-line radius of approximately 1,200 meters (1.2 km).</p>
+          </div>
+          <div class="guide-col">
+            <h3 class="guide-subhead">Real Estate & Tourism Benefits</h3>
+            <p class="guide-text">Whether you are evaluating a new apartment to rent or choosing a hotel for your vacation, visualizing the walkable radius helps assess neighborhood convenience. High walkability scores correlate with healthier lifestyles, reduced transportation costs, and lower carbon footprints.</p>
+          </div>
+        </div>
+
+        <h3 class="guide-subhead" style="margin-top: 24px;">Frequently Asked Questions</h3>
+        <div class="faq-accordion">
+          <details class="faq-item">
+            <summary class="faq-question">Does the circle account for streets and buildings?</summary>
+            <p class="faq-answer">No, the circle represents "as the crow flies" (straight-line) distance. Actual walking distance will be slightly longer depending on the layout of streets, pedestrian crossings, and natural barriers like rivers or highways.</p>
+          </details>
+          <details class="faq-item">
+            <summary class="faq-question">Can I use this tool anywhere in the world?</summary>
+            <p class="faq-answer">Yes! The underlying OpenStreetMap data has global coverage. You can use your device's GPS to find your current location in any country, or manually tap on the map to inspect neighborhoods in other cities before traveling.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <div class="footer-col">
+        <div class="brand-logo">
+          <div class="logo-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+          </div>
+          <span class="logo-title">GeoTools<span class="highlight">Suite</span></span>
+        </div>
+        <p class="footer-desc">A free, privacy-first collection of 12 client-side location and GPS web utilities designed for drivers, travelers, and nature enthusiasts.</p>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-title">Urban Tools</h4>
+        <ul class="footer-links">
+          <li><a href="../halfway/">Fair Halfway Point</a></li>
+          <li><a href="../walking-radius/">15-Min Walk Radius</a></li>
+          <li><a href="../qibla-finder/">Qibla & Compass</a></li>
+          <li><a href="../eco-dashboard/">Environment Dashboard</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-title">Legal & Trust</h4>
+        <ul class="footer-links">
+          <li><a href="../privacy.html">Privacy Policy</a></li>
+          <li><a href="../terms.html">Terms of Service</a></li>
+          <li><a href="../about.html">About Us</a></li>
+          <li><a href="mailto:sobl5910@gmail.com">Contact Support</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; 2026 GeoTools Suite. Zero tracking. Pure client-side calculations.</p>
+    </div>
+  </footer>
+
+  <script>
+    let map = null;
+    let centerMarker = null;
+    let radiusCircle = null;
+    
+    const distanceSelect = document.getElementById('distanceSelect');
+    const gpsBtn = document.getElementById('gpsBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    // Default coordinates (London) to show something on load
+    const defaultLat = 51.505;
+    const defaultLng = -0.09;
+
+    function initMap() {
+      map = L.map('radiusMap').setView([defaultLat, defaultLng], 13);
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+
+      // Allow clicking on map to drop a pin manually
+      map.on('click', function(e) {
+        drawRadius(e.latlng.lat, e.latlng.lng);
+      });
+    }
+
+    function drawRadius(lat, lng) {
+      const radiusMeters = parseInt(distanceSelect.value, 10);
+
+      // Remove existing elements
+      if (centerMarker) map.removeLayer(centerMarker);
+      if (radiusCircle) map.removeLayer(radiusCircle);
+
+      // Add new Marker
+      centerMarker = L.marker([lat, lng]).addTo(map).bindPopup("Starting Point").openPopup();
+      
+      // Add Circle
+      radiusCircle = L.circle([lat, lng], {
+        color: '#16a34a',
+        fillColor: '#22c55e',
+        fillOpacity: 0.15,
+        radius: radiusMeters
+      }).addTo(map);
+
+      // Auto-zoom map to fit the circle perfectly
+      map.fitBounds(radiusCircle.getBounds(), { padding: [20, 20] });
+    }
+
+    // React to Dropdown Change
+    distanceSelect.addEventListener('change', () => {
+      if (centerMarker) {
+        const pos = centerMarker.getLatLng();
+        drawRadius(pos.lat, pos.lng);
+      }
+    });
+
+    // Use GPS Location
+    gpsBtn.addEventListener('click', () => {
+      if (!('geolocation' in navigator)) {
+        alert('Geolocation is not supported by your browser.');
+        return;
+      }
+      
+      gpsBtn.innerHTML = 'Locating...';
+      
+      navigator.geolocation.getCurrentPosition(pos => {
+        drawRadius(pos.coords.latitude, pos.coords.longitude);
+        gpsBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg> Use My Current GPS Location';
+      }, err => {
+        alert("Error getting location: " + err.message);
+        gpsBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg> Use My Current GPS Location';
+      }, { enableHighAccuracy: true });
+    });
+
+    // Clear Map
+    clearBtn.addEventListener('click', () => {
+      if (centerMarker) map.removeLayer(centerMarker);
+      if (radiusCircle) map.removeLayer(radiusCircle);
+      centerMarker = null;
+      radiusCircle = null;
+    });
+
+    window.addEventListener('load', initMap);
+  </script>
+</body>
+</html>
+
+
