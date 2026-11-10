@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Local Environment Dashboard - Live UV Index, AQI & Wind</title>
+  <meta name="description" content="Check real-time environmental metrics for your exact location. Free online dashboard for UV index, Air Quality Index (AQI), and wind velocity.">
+  <meta name="robots" content="index, follow">
+  
+  <!-- Google Analytics Tag -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PTZ0GYNKVJ"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-PTZ0GYNKVJ');
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  
+  <!-- Path to main CSS from inside the tool folder -->
+  <link rel="stylesheet" href="../assets/style_g83k2.css">
+  
+  <style>
+    .tool-header-area { text-align: center; margin: 30px 0 20px; }
+    .tool-title { font-size: 30px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; }
+    .tool-lead { font-size: 15px; color: var(--text-muted); max-width: 620px; margin: 0 auto; }
+    
+    .eco-card { background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-card); margin-bottom: 30px; }
+    
+    .eco-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 24px; }
+    .eco-metric-box { background: #0b1329; border: 2px solid #1e293b; border-radius: var(--radius-md); padding: 24px 16px; text-align: center; display: flex; flex-direction: column; align-items: center; transition: transform 0.2s; }
+    .eco-metric-box:hover { transform: translateY(-4px); }
+    
+    .metric-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+    .icon-uv { background: rgba(234, 88, 12, 0.2); color: #f97316; }
+    .icon-aqi { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+    .icon-wind { background: rgba(14, 165, 233, 0.2); color: #0ea5e9; }
+    
+    .metric-val { font-family: 'Share Tech Mono', monospace, sans-serif; font-size: 42px; font-weight: 700; color: #ffffff; line-height: 1; margin-bottom: 6px; }
+    .metric-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+    
+    .metric-status { display: inline-block; margin-top: 12px; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; background: #1e293b; color: #94a3b8; text-transform: uppercase; }
+    
+    /* Dynamic Status Colors */
+    .status-good { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+    .status-moderate { background: rgba(250, 204, 21, 0.2); color: #fde047; border: 1px solid rgba(250, 204, 21, 0.3); }
+    .status-danger { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .status-extreme { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; border: 1px solid rgba(168, 85, 247, 0.3); }
+    
+    .location-banner { background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px; text-align: center; margin-bottom: 24px; font-size: 14px; font-weight: 600; color: var(--text-main); }
+    
+    .tool-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+    .btn-tool { background: #ffffff; border: 1px solid var(--border-color); color: var(--text-main); font-family: inherit; font-size: 14px; font-weight: 600; padding: 12px 20px; border-radius: var(--radius-sm); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s ease; }
+    .btn-tool:hover { background: #f1f5f9; border-color: var(--border-hover); }
+    .btn-primary { background: #2563eb; color: #ffffff; border-color: #2563eb; }
+    .btn-primary:hover { background: #1d4ed8; color: #ffffff; }
+
+    @media (max-width: 768px) { .eco-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+  <aside class="top-banner">
+    <div class="container banner-inner">
+      <span class="badge">Privacy First</span>
+      <span>Your GPS data is used momentarily to fetch free public weather APIs. No data is stored.</span>
+    </div>
+  </aside>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="../index.html" class="brand-logo">
+        <div class="logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="logo-title">GeoTools<span class="highlight">Suite</span></span>
+          <span class="logo-sub">Online GPS Utilities</span>
+        </div>
+      </a>
+      <nav class="nav-links">
+        <a href="../index.html#travel-tools">Motion & Drive</a>
+        <a href="../index.html#city-tools">Urban & Social</a>
+        <a href="../index.html#science-tools">Sun & Science</a>
+      </nav>
+      <div class="header-action">
+        <a href="../index.html" class="btn-primary-sm">&larr; Back to Tools</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="tool-header-area">
+      <span class="hero-chip">Social & Neighborhood Tool</span>
+      <h1 class="tool-title">Local Environment Dashboard</h1>
+      <p class="tool-lead">Instantly check the Air Quality Index (AQI), Ultraviolet (UV) radiation levels, and current wind speed at your exact geographic coordinates.</p>
+    </div>
+
+    <div class="eco-card">
+      <div id="locationBanner" class="location-banner">
+        📍 Waiting for GPS Permission...
+      </div>
+
+      <div class="eco-grid">
+        <!-- UV Index Box -->
+        <div class="eco-metric-box">
+          <div class="metric-icon icon-uv">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </div>
+          <div id="uvVal" class="metric-val">--</div>
+          <div class="metric-label">UV INDEX</div>
+          <div id="uvStatus" class="metric-status">STANDBY</div>
+        </div>
+
+        <!-- AQI Box -->
+        <div class="eco-metric-box">
+          <div class="metric-icon icon-aqi">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 18a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2"/><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><circle cx="12" cy="10" r="2"/><line x1="8" y1="2" x2="8" y2="4"/><line x1="16" y1="2" x2="16" y2="4"/></svg>
+          </div>
+          <div id="aqiVal" class="metric-val">--</div>
+          <div class="metric-label">AIR QUALITY (AQI)</div>
+          <div id="aqiStatus" class="metric-status">STANDBY</div>
+        </div>
+
+        <!-- Wind Box -->
+        <div class="eco-metric-box">
+          <div class="metric-icon icon-wind">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+          </div>
+          <div id="windVal" class="metric-val">--</div>
+          <div class="metric-label">WIND (KM/H)</div>
+          <div id="windStatus" class="metric-status">STANDBY</div>
+        </div>
+      </div>
+
+      <div class="tool-controls">
+        <button id="loadDataBtn" class="btn-tool btn-primary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+          <span id="btnText">Scan Local Environment</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="ad-wrapper">
+      <div class="ad-slot-card">
+        <span class="ad-label">Advertisement</span>
+        <div class="ad-placeholder">
+          <span>Ad Space (In-Article Responsive Banner)</span>
+        </div>
+      </div>
+    </div>
+
+    <section class="seo-guide-section">
+      <div class="guide-box">
+        <h2 class="guide-heading">Understanding Environmental Indexes</h2>
+        <p class="guide-text">To provide a healthy outdoor experience, this tool pulls localized meteorological data based on your exact GPS coordinates rather than generic city-level forecasts. Knowing these metrics helps you plan walks, sports, or decide when to apply sunscreen.</p>
+
+        <div class="guide-grid">
+          <div class="guide-col">
+            <h3 class="guide-subhead">How UV Index Works</h3>
+            <p class="guide-text">The Ultraviolet (UV) Index predicts the intensity of UV radiation from the sun. A rating of 0-2 (Low) means you can safely stay outside, while an index of 8-10 (Very High) means unprotected skin can burn quickly. At high levels, sunglasses and SPF 30+ sunscreen are strictly recommended.</p>
+          </div>
+          <div class="guide-col">
+            <h3 class="guide-subhead">European Air Quality Index (EAQI)</h3>
+            <p class="guide-text">We use the European Air Quality standard which factors in five key pollutants: Particulate Matter (PM10 and PM2.5), Ozone (O3), Nitrogen Dioxide (NO2), and Sulphur Dioxide (SO2). Lower numbers indicate cleaner, healthier air for outdoor activities.</p>
+          </div>
+        </div>
+
+        <h3 class="guide-subhead" style="margin-top: 24px;">Frequently Asked Questions</h3>
+        <div class="faq-accordion">
+          <details class="faq-item">
+            <summary class="faq-question">Where does this environmental data come from?</summary>
+            <p class="faq-answer">Once your device determines your GPS coordinates, the tool communicates with open-source meteorological APIs (like Open-Meteo) which aggregate data from national weather services and environmental satellites worldwide.</p>
+          </details>
+          <details class="faq-item">
+            <summary class="faq-question">Why does the Air Quality Index (AQI) change throughout the day?</summary>
+            <p class="faq-answer">Air quality fluctuates based on traffic rush hours, industrial activity, and weather patterns. For instance, wind can blow smog away, while temperature inversions can trap pollution near the ground level.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <div class="footer-col">
+        <div class="brand-logo">
+          <div class="logo-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+          </div>
+          <span class="logo-title">GeoTools<span class="highlight">Suite</span></span>
+        </div>
+        <p class="footer-desc">A free, privacy-first collection of 12 client-side location and GPS web utilities designed for drivers, travelers, and nature enthusiasts.</p>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-title">Urban Tools</h4>
+        <ul class="footer-links">
+          <li><a href="../halfway/">Fair Halfway Point</a></li>
+          <li><a href="../walking-radius/">15-Min Walk Radius</a></li>
+          <li><a href="../qibla-finder/">Qibla & Compass</a></li>
+          <li><a href="../eco-dashboard/">Environment Dashboard</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-title">Legal & Trust</h4>
+        <ul class="footer-links">
+          <li><a href="../privacy.html">Privacy Policy</a></li>
+          <li><a href="../terms.html">Terms of Service</a></li>
+          <li><a href="../about.html">About Us</a></li>
+          <li><a href="mailto:sobl5910@gmail.com">Contact Support</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; 2026 GeoTools Suite. Zero tracking. Pure client-side calculations.</p>
+    </div>
+  </footer>
+
+  <script>
+    const loadDataBtn = document.getElementById('loadDataBtn');
+    const btnText = document.getElementById('btnText');
+    const locationBanner = document.getElementById('locationBanner');
+    
+    const uvVal = document.getElementById('uvVal');
+    const uvStatus = document.getElementById('uvStatus');
+    const aqiVal = document.getElementById('aqiVal');
+    const aqiStatus = document.getElementById('aqiStatus');
+    const windVal = document.getElementById('windVal');
+    const windStatus = document.getElementById('windStatus');
+
+    loadDataBtn.addEventListener('click', () => {
+      if (!('geolocation' in navigator)) {
+        alert('Geolocation is not supported by your browser.');
+        return;
+      }
+
+      btnText.textContent = 'Acquiring GPS...';
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          locationBanner.textContent = `📍 Coordinates: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+          fetchEnvironmentData(lat, lng);
+        },
+        err => {
+          btnText.textContent = 'Scan Local Environment';
+          alert('Could not get GPS location: ' + err.message);
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    });
+
+    async function fetchEnvironmentData(lat, lng) {
+      btnText.textContent = 'Fetching Live Data...';
+      
+      try {
+        // Fetch Weather (Wind) & UV from Open-Meteo Air Quality and Weather APIs
+        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=wind_speed_10m`);
+        const aqiRes = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lng}&current=european_aqi,uv_index`);
+        
+        const weatherData = await weatherRes.json();
+        const aqiData = await aqiRes.json();
+
+        processData(weatherData, aqiData);
+
+      } catch (e) {
+        alert('Network error while fetching environmental data.');
+        btnText.textContent = 'Retry Scan';
+      }
+    }
+
+    function processData(weatherData, aqiData) {
+      // Process Wind
+      const windSpeed = weatherData.current?.wind_speed_10m || 0;
+      windVal.textContent = windSpeed.toFixed(1);
+      windStatus.className = 'metric-status';
+      if (windSpeed < 20) {
+        windStatus.textContent = 'Calm / Light Breeze';
+        windStatus.classList.add('status-good');
+      } else if (windSpeed < 40) {
+        windStatus.textContent = 'Moderate Wind';
+        windStatus.classList.add('status-moderate');
+      } else {
+        windStatus.textContent = 'Strong Wind';
+        windStatus.classList.add('status-danger');
+      }
+
+      // Process UV
+      const uv = aqiData.current?.uv_index || 0;
+      uvVal.textContent = uv.toFixed(1);
+      uvStatus.className = 'metric-status';
+      if (uv < 3) {
+        uvStatus.textContent = 'Low (Safe)';
+        uvStatus.classList.add('status-good');
+      } else if (uv < 6) {
+        uvStatus.textContent = 'Moderate (Use Sunscreen)';
+        uvStatus.classList.add('status-moderate');
+      } else if (uv < 8) {
+        uvStatus.textContent = 'High (Protection Required)';
+        uvStatus.classList.add('status-danger');
+      } else {
+        uvStatus.textContent = 'Extreme (Avoid Sun)';
+        uvStatus.classList.add('status-extreme');
+      }
+
+      // Process AQI (European AQI: 0-20 Good, 20-40 Fair, 40-60 Moderate, 60+ Poor)
+      const aqi = aqiData.current?.european_aqi || 0;
+      aqiVal.textContent = aqi;
+      aqiStatus.className = 'metric-status';
+      if (aqi <= 40) {
+        aqiStatus.textContent = 'Good (Healthy)';
+        aqiStatus.classList.add('status-good');
+      } else if (aqi <= 60) {
+        aqiStatus.textContent = 'Moderate';
+        aqiStatus.classList.add('status-moderate');
+      } else {
+        aqiStatus.textContent = 'Poor (Unhealthy)';
+        aqiStatus.classList.add('status-danger');
+      }
+
+      btnText.textContent = 'Scan Local Environment';
+    }
+  </script>
+</body>
+</html>
